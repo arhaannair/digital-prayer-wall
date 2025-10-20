@@ -16,7 +16,7 @@
     .wrap{max-width:980px;margin:0 auto;padding:24px}
     header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
     .brand{display:flex;gap:12px;align-items:center}
-    .brand i{width:18px;height:26px;background:conic-gradient(from 0deg,var(--brand),#fff0 80%);filter:blur(.3px);border-radius:3px;box-shadow:0 0 18px #f59e0b66}
+    .brand img{height:26px;width:auto;border-radius:4px;box-shadow:0 0 18px #f59e0b66}
     h1{font-size:22px;margin:0}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
     @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
@@ -56,12 +56,14 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="brand"><i aria-hidden="true"></i><h1>Parish Prayer Wall</h1></div>
+      <div class="brand">
+        <img src="logo.png" alt="Parish Prayer Wall logo" />
+        <h1>Parish Prayer Wall</h1>
+      </div>
       <div class="pill" id="stats"><span>Active intentions</span><strong id="statCount">0</strong></div>
     </header>
 
     <div class="grid">
-      <!-- Submit card -->
       <section class="card" aria-labelledby="formTitle">
         <div class="hd"><h2 id="formTitle" style="margin:0;font-size:18px">Submit an intention</h2></div>
         <div class="bd">
@@ -90,7 +92,6 @@
               <div class="hint">Submissions are reviewed before posting.</div>
             </div>
 
-            <!-- Honeypot for spam bots -->
             <div class="sr-only">
               <label for="website">Website</label>
               <input id="website" name="website" autocomplete="off" />
@@ -105,7 +106,6 @@
         </div>
       </section>
 
-      <!-- List card -->
       <section class="card" aria-labelledby="listTitle">
         <div class="hd"><h2 id="listTitle" style="margin:0;font-size:18px">Prayer intentions</h2></div>
         <div class="bd">
@@ -130,10 +130,8 @@
     </footer>
   </div>
 
-  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Replace with your own values
     const SUPABASE_URL = "https://nrctyqyxymbkzpxylbit.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3R5cXl4eW1ia3pweHlsYml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Nzg1MTksImV4cCI6MjA3NjU1NDUxOX0.9_aorcWQtcDpciiRIdjyDKC6poeCdZWmb7Ejyg0d8b0";
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -188,7 +186,6 @@
           </div>`;
         list.appendChild(el);
       }
-      // attach handlers
       document.querySelectorAll("button.light").forEach(btn=>{
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
@@ -222,11 +219,9 @@
       render();
     }
 
-    // live updates for new approvals and candle changes
     function enableRealtime(){
       const chan = db.channel('intentions-list');
-      chan.on('postgres_changes', { event: '*', schema: 'public', table: 'intentions' }, payload => {
-        // RLS ensures we only see approved rows
+      chan.on('postgres_changes', { event: '*', schema: 'public', table: 'intentions' }, () => {
         loadIntentions();
       }).subscribe();
     }
@@ -253,15 +248,12 @@
       toast("Received. Will show after review.");
     });
 
-    // input counter
     document.getElementById('message').addEventListener('input', e=>{
       document.getElementById('msgCount').textContent = e.target.value.length;
     });
 
-    // filter clicks
     document.querySelectorAll('.chip').forEach(c=> c.addEventListener('click', ()=> setFilter(c.dataset.filter)) );
 
-    // tiny toast helper
     function toast(text, isErr=false){
       let t = document.getElementById('toast');
       if(!t){
@@ -277,11 +269,3 @@
   </script>
 </body>
 </html>
-
-<!--
-Supabase setup reminders
-1. Replace SUPABASE_URL and SUPABASE_ANON_KEY with your project values.
-2. Ensure RLS policies from earlier are in place and that Realtime is enabled for the public schema.
-3. Optional: add CAPTCHA and an admin page later.
--->
-
