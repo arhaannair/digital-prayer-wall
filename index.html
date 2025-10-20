@@ -3,10 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Digital Prayer Wall</title>
+  <title>Parish Prayer Wall</title>
+  <meta name="description" content="Submit and pray over intentions from our parish community." />
+  <meta property="og:title" content="Parish Prayer Wall" />
+  <meta property="og:description" content="Submit and pray over intentions from our parish community." />
+  <meta name="theme-color" content="#0f172a" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <style>
-    :root { --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --brand:#f59e0b; }
+    :root { --bg:#0f172a; --card:#0e1529; --ink:#e5e7eb; --muted:#94a3b8; --brand:#f59e0b; --ok:#22c55e; --err:#ef4444; }
     html,body{height:100%}
     body{margin:0;background:linear-gradient(180deg,#0b1222,#0f172a);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif}
     .wrap{max-width:980px;margin:0 auto;padding:24px}
@@ -16,7 +20,7 @@
     h1{font-size:22px;margin:0}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
     @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
-    .card{background:linear-gradient(180deg,#0e1529,#0c1326);border:1px solid #1f2937;border-radius:16px}
+    .card{background:linear-gradient(180deg,var(--card),#0c1326);border:1px solid #1f2937;border-radius:16px;box-shadow:0 0 0 1px #000 inset}
     .card>.hd{padding:16px 16px 0 16px}
     .card>.bd{padding:16px}
     label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
@@ -33,30 +37,43 @@
     .tag{padding:2px 8px;border-radius:999px;border:1px solid #273244;background:#0b1222;color:#d1d5db;font-size:11px}
     .candle{display:inline-flex;align-items:center;gap:8px}
     .candle button{border:1px solid #273244;background:#0b1222;color:#fef3c7;border-radius:999px;padding:6px 10px;cursor:pointer}
-    .flame{width:8px;height:12px;border-radius:50%;background:radial-gradient(circle at 50% 40%, #fff7ed 0%, #fde68a 45%, #f59e0b 70%, #f59e0b00 72%);box-shadow:0 0 14px 2px #f59e0b88;display:inline-block}
+    .flame{width:8px;height:12px;border-radius:50% 50% 45% 55% / 60% 60% 40% 40%;background:radial-gradient(circle at 50% 40%, #fff7ed 0%, #fde68a 45%, #f59e0b 70%, #f59e0b00 72%);box-shadow:0 0 14px 2px #f59e0b88;display:inline-block;transform:translateY(1px)}
     .empty{padding:20px;text-align:center;color:var(--muted)}
+    .pill{display:inline-grid;grid-auto-flow:column;gap:8px;align-items:center;background:#0b1222;border:1px solid #273244;border-radius:999px;padding:6px 10px;font-size:12px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .banner{background:#052e16;color:#bbf7d0;border:1px solid #064e3b;border-radius:12px;padding:10px 12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+    .chip{border:1px solid #273244;background:#0b1222;color:#e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+    .chip[aria-pressed="true"]{outline:2px solid #f59e0b}
+    .counter{font-size:12px;color:var(--muted);text-align:right}
+    .toast{position:fixed;right:16px;bottom:16px;z-index:1000;display:none;padding:10px 12px;border-radius:10px}
+    .toast.ok{background:#052e16;color:#bbf7d0;border:1px solid #064e3b}
+    .toast.err{background:#3f1d1d;color:#fecaca;border:1px solid #7f1d1d}
+    .skeleton{border-radius:14px;border:1px solid #1f2937;min-height:80px;background:linear-gradient(90deg,#0c1326 25%,#0e1529 37%,#0c1326 63%);background-size:400% 100%;animation:sh 1.2s ease-in-out infinite}
+    @keyframes sh{0%{background-position:100% 0}100%{background-position:0 0}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="brand"><i></i><h1>Parish Prayer Wall</h1></div>
-      <div><span>Active intentions: </span><strong id="statCount">0</strong></div>
+      <div class="brand"><i aria-hidden="true"></i><h1>Parish Prayer Wall</h1></div>
+      <div class="pill" id="stats"><span>Active intentions</span><strong id="statCount">0</strong></div>
     </header>
 
     <div class="grid">
-      <section class="card">
-        <div class="hd"><h2>Submit an Intention</h2></div>
+      <!-- Submit card -->
+      <section class="card" aria-labelledby="formTitle">
+        <div class="hd"><h2 id="formTitle" style="margin:0;font-size:18px">Submit an intention</h2></div>
         <div class="bd">
           <form id="intentForm">
             <div class="row">
               <div>
-                <label>Name (optional)</label>
-                <input id="name" maxlength="60" placeholder="First name or leave blank" />
+                <label for="name">Name optional</label>
+                <input id="name" name="name" maxlength="60" placeholder="First name or leave blank" />
               </div>
               <div>
-                <label>Category</label>
-                <select id="category" required>
+                <label for="category">Category</label>
+                <select id="category" name="category" required>
                   <option value="healing">Healing</option>
                   <option value="thanksgiving">Thanksgiving</option>
                   <option value="peace">Peace</option>
@@ -66,104 +83,204 @@
                 </select>
               </div>
             </div>
-            <label style="margin-top:10px;display:block">Your intention</label>
-            <textarea id="message" maxlength="500" placeholder="Write your intention. Please avoid personal info."></textarea>
-            <div class="hint">Max 500 characters. Submissions are reviewed before posting.</div>
-            <div style="margin-top:12px">
-              <button class="btn" id="submitBtn">Send intention</button>
-              <span id="formMsg" class="hint"></span>
+            <div style="margin-top:10px">
+              <label for="message">Your intention</label>
+              <textarea id="message" name="message" maxlength="500" placeholder="Write your intention. Please avoid personal info." aria-describedby="msgCount"></textarea>
+              <div class="counter"><span id="msgCount">0</span>/500</div>
+              <div class="hint">Submissions are reviewed before posting.</div>
+            </div>
+
+            <!-- Honeypot for spam bots -->
+            <div class="sr-only">
+              <label for="website">Website</label>
+              <input id="website" name="website" autocomplete="off" />
+            </div>
+
+            <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+              <button class="btn" id="submitBtn" type="submit">Send intention</button>
+              <span id="formMsg" class="hint" role="status"></span>
             </div>
           </form>
-          <div class="hint" id="reviewNote" style="display:none;margin-top:12px">Thank you. Your intention was received and will appear after review.</div>
+          <div class="banner" id="reviewNote" style="display:none;margin-top:12px">Thank you. Your intention was received and will appear after review.</div>
         </div>
       </section>
 
-      <section class="card">
-        <div class="hd"><h2>Prayer Intentions</h2></div>
+      <!-- List card -->
+      <section class="card" aria-labelledby="listTitle">
+        <div class="hd"><h2 id="listTitle" style="margin:0;font-size:18px">Prayer intentions</h2></div>
         <div class="bd">
-          <div id="list" class="list"></div>
+          <div class="toolbar" role="toolbar" aria-label="Filters">
+            <button class="chip" data-filter="all" aria-pressed="true">All</button>
+            <button class="chip" data-filter="healing">Healing</button>
+            <button class="chip" data-filter="thanksgiving">Thanksgiving</button>
+            <button class="chip" data-filter="peace">Peace</button>
+            <button class="chip" data-filter="family">Family</button>
+            <button class="chip" data-filter="discernment">Discernment</button>
+            <button class="chip" data-filter="other">Other</button>
+          </div>
+          <div id="list" class="list" aria-live="polite"></div>
           <div id="empty" class="empty" style="display:none">No intentions yet. Be the first to submit.</div>
+          <div id="loading" class="skeleton" aria-hidden="true"></div>
         </div>
       </section>
     </div>
 
-    <footer style="margin-top:18px;color:#9ca3af;font-size:12px">
-      Built with Supabase. Data older than 30 days is archived. Please be respectful.
+    <footer style="margin-top:18px;color:var(--muted);font-size:12px">
+      Built with Supabase. Data older than 30 days is archived. Please be respectful and avoid sharing sensitive details.
     </footer>
   </div>
 
+  <!-- Supabase client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const SUPABASE_URL = "https://nrctyqyxymbkzpxylbit.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3R5cXl4eW1ia3pweHlsYml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Nzg1MTksImV4cCI6MjA3NjU1NDUxOX0.9_aorcWQtcDpciiRIdjyDKC6poeCdZWmb7Ejyg0d8b0";
+    // Replace with your own values
+    const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function loadIntentions(){
-      const { data, error } = await db
-        .from("intentions")
-        .select("id,name,category,message,created_at,candle_count")
-        .eq("approved", true)
-        .order("created_at", { ascending:false })
-        .limit(100);
-      if(error){ console.error(error); return; }
+    const COOLDOWN_MINUTES = 2;
+    function isCoolingDown(){
+      const t = Number(localStorage.getItem("lastSubmitAt")||0);
+      return Date.now() - t < COOLDOWN_MINUTES*60*1000;
+    }
+
+    let allRows = [];
+    let activeFilter = "all";
+
+    function fmtDate(iso){
+      const d = new Date(iso);
+      return d.toLocaleString(undefined,{ dateStyle:"medium", timeStyle:"short" });
+    }
+
+    function escapeHtml(s){
+      return s
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    function render(){
       const list = document.getElementById("list");
       list.innerHTML = "";
-      if(!data || data.length === 0){
-        document.getElementById("empty").style.display = "block";
-        document.getElementById("statCount").textContent = 0;
-        return;
-      }
-      document.getElementById("empty").style.display = "none";
-      document.getElementById("statCount").textContent = data.length;
-      for(const row of data){
+      const filtered = activeFilter === "all" ? allRows : allRows.filter(r=>r.category===activeFilter);
+      document.getElementById("statCount").textContent = filtered.length;
+      document.getElementById("empty").style.display = filtered.length?"none":"block";
+      document.getElementById("loading").style.display = "none";
+      for(const row of filtered){
         const el = document.createElement("div");
         el.className = "item";
-        const when = new Date(row.created_at).toLocaleString();
+        const when = fmtDate(row.created_at);
         const who = row.name && row.name.trim() ? row.name.trim() : "Anonymous";
         el.innerHTML = `
           <div class="meta">
-            <span><strong>${who}</strong> • ${when}</span>
+            <span><strong>${who}</strong> • <span>${when}</span></span>
             <span class="tag">${row.category}</span>
           </div>
-          <div style="white-space:pre-wrap">${row.message}</div>
-          <div style="margin-top:8px" class="candle">
-            <span class="flame"></span>
-            <button data-id="${row.id}" class="light">Light a candle</button>
-            <span class="hint">Prayers offered: <strong id="c${row.id}">${row.candle_count||0}</strong></span>
+          <div style="white-space:pre-wrap">${escapeHtml(row.message)}</div>
+          <div style="margin-top:8px;display:flex;gap:10px;align-items:center;justify-content:space-between">
+            <div class="candle">
+              <span class="flame" aria-hidden="true"></span>
+              <button data-id="${row.id}" class="light">Light a candle</button>
+              <span class="hint">Prayers offered: <strong id="c${row.id}">${row.candle_count||0}</strong></span>
+            </div>
           </div>`;
         list.appendChild(el);
       }
+      // attach handlers
       document.querySelectorAll("button.light").forEach(btn=>{
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           btn.disabled = true;
-          const { error } = await db.rpc("increment_candle", { x_id: id });
-          if(!error){
-            const n = document.getElementById("c"+id);
-            if(n) n.textContent = Number(n.textContent)+1;
-          }
-          setTimeout(()=> btn.disabled = false, 2000);
+          try{
+            const { data, error } = await db.rpc("increment_candle", { x_id: id });
+            if(error) throw error;
+          }catch(err){ toast("Could not record prayer", true); }
+          setTimeout(()=> btn.disabled = false, 800);
         });
       });
+    }
+
+    async function loadIntentions(){
+      document.getElementById("loading").style.display = "block";
+      const { data, error } = await db
+        .from("intentions")
+        .select("id,name,category,message,created_at,candle_count")
+        .eq("approved", true)
+        .gte("created_at", new Date(Date.now() - 30*24*60*60*1000).toISOString())
+        .order("created_at", { ascending:false })
+        .limit(100);
+      if(error){ console.error(error); toast("Load failed", true); return; }
+      allRows = data || [];
+      render();
+    }
+
+    function setFilter(which){
+      activeFilter = which;
+      document.querySelectorAll('.chip').forEach(c=> c.setAttribute('aria-pressed', String(c.dataset.filter===which)) );
+      render();
+    }
+
+    // live updates for new approvals and candle changes
+    function enableRealtime(){
+      const chan = db.channel('intentions-list');
+      chan.on('postgres_changes', { event: '*', schema: 'public', table: 'intentions' }, payload => {
+        // RLS ensures we only see approved rows
+        loadIntentions();
+      }).subscribe();
     }
 
     document.getElementById("intentForm").addEventListener("submit", async (e)=>{
       e.preventDefault();
       const msg = document.getElementById("formMsg");
       msg.textContent = "";
-      const name = document.getElementById("name").value.trim();
+      if(isCoolingDown()){ msg.textContent = `Please wait ${COOLDOWN_MINUTES} minutes between submissions.`; return; }
+      const honeypot = document.getElementById("website").value;
+      if(honeypot){ msg.textContent = "Submission blocked"; return; }
+      const name = document.getElementById("name").value.trim().slice(0,60);
       const category = document.getElementById("category").value;
       const message = document.getElementById("message").value.trim();
       if(!message){ msg.textContent = "Please enter an intention."; return; }
       document.getElementById("submitBtn").disabled = true;
       const { error } = await db.from("intentions").insert({ name, category, message });
       document.getElementById("submitBtn").disabled = false;
-      if(error){ msg.textContent = "Could not send. Try again."; console.error(error); return; }
+      if(error){ msg.textContent = "Could not send. Try again."; console.error(error); toast("Send failed", true); return; }
+      localStorage.setItem("lastSubmitAt", String(Date.now()));
       document.getElementById("intentForm").reset();
+      document.getElementById("msgCount").textContent = 0;
       document.getElementById("reviewNote").style.display = "block";
+      toast("Received. Will show after review.");
     });
 
+    // input counter
+    document.getElementById('message').addEventListener('input', e=>{
+      document.getElementById('msgCount').textContent = e.target.value.length;
+    });
+
+    // filter clicks
+    document.querySelectorAll('.chip').forEach(c=> c.addEventListener('click', ()=> setFilter(c.dataset.filter)) );
+
+    // tiny toast helper
+    function toast(text, isErr=false){
+      let t = document.getElementById('toast');
+      if(!t){
+        t = document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t);
+      }
+      t.className = 'toast ' + (isErr?'err':'ok');
+      t.textContent = text; t.style.display='block';
+      setTimeout(()=> t.style.display='none', 2200);
+    }
+
     loadIntentions();
+    enableRealtime();
   </script>
 </body>
 </html>
+
+<!--
+Supabase setup reminders
+1. Replace SUPABASE_URL and SUPABASE_ANON_KEY with your project values.
+2. Ensure RLS policies from earlier are in place and that Realtime is enabled for the public schema.
+3. Optional: add CAPTCHA and an admin page later.
+-->
