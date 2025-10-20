@@ -193,27 +193,19 @@
           </div>`;
         list.appendChild(el);
       }
-      document.querySelectorAll("button.light").forEach(btn=>{
-  btn.addEventListener("click", async () => {
-    const id = btn.getAttribute("data-id");
-    const counter = document.getElementById("c"+id);
-    btn.disabled = true;
-
-    // optimistic bump
-    const before = Number(counter.textContent || 0);
-    counter.textContent = before + 1;
-
-    const { error } = await db.rpc("increment_candle", { x_id: id });
-
-    if (error) {
-      // revert if server failed
-      counter.textContent = before;
-      toast("Could not record prayer", true);
+            document.querySelectorAll("button.light").forEach(btn=>{
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          btn.disabled = true;
+          try{
+            const { data, error } = await db.rpc("increment_candle", { x_id: id });
+            if(error) throw error;
+          }catch(err){ toast("Could not record prayer", true); }
+          setTimeout(()=> btn.disabled = false, 800);
+        });
+      });
     }
 
-    setTimeout(()=> btn.disabled = false, 800);
-  });
-});
 
 
     async function loadIntentions(){
@@ -286,6 +278,7 @@
   </script>
 </body>
 </html>
+
 
 
 
