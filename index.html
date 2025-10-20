@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital Prayer Wall</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <style>
+    :root { --bg:#0f172a; --card:#111827; --ink:#e5e7eb; --muted:#9ca3af; --brand:#f59e0b; }
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1222,#0f172a);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,Ubuntu,sans-serif}
+    .wrap{max-width:980px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand i{width:18px;height:26px;background:conic-gradient(from 0deg,var(--brand),#fff0 80%);filter:blur(.3px);border-radius:3px;box-shadow:0 0 18px #f59e0b66}
+    h1{font-size:22px;margin:0}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
+    .card{background:linear-gradient(180deg,#0e1529,#0c1326);border:1px solid #1f2937;border-radius:16px}
+    .card>.hd{padding:16px 16px 0 16px}
+    .card>.bd{padding:16px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input,textarea,select{width:100%;background:#0b1222;color:var(--ink);border:1px solid #273244;border-radius:10px;padding:10px 12px;outline:none}
+    textarea{min-height:110px;resize:vertical}
+    .hint{font-size:12px;color:var(--muted)}
+    .row{display:flex;gap:10px}
+    .row>*{flex:1}
+    .btn{appearance:none;border:0;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#1f2937;font-weight:600;padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .list{display:grid;gap:12px}
+    .item{padding:14px;border:1px solid #1f2937;border-radius:14px;background:linear-gradient(180deg,#0d1528,#0c1326)}
+    .item .meta{display:flex;gap:8px;align-items:center;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:6px}
+    .tag{padding:2px 8px;border-radius:999px;border:1px solid #273244;background:#0b1222;color:#d1d5db;font-size:11px}
+    .candle{display:inline-flex;align-items:center;gap:8px}
+    .candle button{border:1px solid #273244;background:#0b1222;color:#fef3c7;border-radius:999px;padding:6px 10px;cursor:pointer}
+    .flame{width:8px;height:12px;border-radius:50%;background:radial-gradient(circle at 50% 40%, #fff7ed 0%, #fde68a 45%, #f59e0b 70%, #f59e0b00 72%);box-shadow:0 0 14px 2px #f59e0b88;display:inline-block}
+    .empty{padding:20px;text-align:center;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand"><i></i><h1>Parish Prayer Wall</h1></div>
+      <div><span>Active intentions: </span><strong id="statCount">0</strong></div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><h2>Submit an Intention</h2></div>
+        <div class="bd">
+          <form id="intentForm">
+            <div class="row">
+              <div>
+                <label>Name (optional)</label>
+                <input id="name" maxlength="60" placeholder="First name or leave blank" />
+              </div>
+              <div>
+                <label>Category</label>
+                <select id="category" required>
+                  <option value="healing">Healing</option>
+                  <option value="thanksgiving">Thanksgiving</option>
+                  <option value="peace">Peace</option>
+                  <option value="family">Family</option>
+                  <option value="discernment">Discernment</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <label style="margin-top:10px;display:block">Your intention</label>
+            <textarea id="message" maxlength="500" placeholder="Write your intention. Please avoid personal info."></textarea>
+            <div class="hint">Max 500 characters. Submissions are reviewed before posting.</div>
+            <div style="margin-top:12px">
+              <button class="btn" id="submitBtn">Send intention</button>
+              <span id="formMsg" class="hint"></span>
+            </div>
+          </form>
+          <div class="hint" id="reviewNote" style="display:none;margin-top:12px">Thank you. Your intention was received and will appear after review.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Prayer Intentions</h2></div>
+        <div class="bd">
+          <div id="list" class="list"></div>
+          <div id="empty" class="empty" style="display:none">No intentions yet. Be the first to submit.</div>
+        </div>
+      </section>
+    </div>
+
+    <footer style="margin-top:18px;color:#9ca3af;font-size:12px">
+      Built with Supabase. Data older than 30 days is archived. Please be respectful.
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://nrctyqyxymbkzpxylbit.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yY3R5cXl4eW1ia3pweHlsYml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5Nzg1MTksImV4cCI6MjA3NjU1NDUxOX0.9_aorcWQtcDpciiRIdjyDKC6poeCdZWmb7Ejyg0d8b0";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function loadIntentions(){
+      const { data, error } = await db
+        .from("intentions")
+        .select("id,name,category,message,created_at,candle_count")
+        .eq("approved", true)
+        .order("created_at", { ascending:false })
+        .limit(100);
+      if(error){ console.error(error); return; }
+      const list = document.getElementById("list");
+      list.innerHTML = "";
+      if(!data || data.length === 0){
+        document.getElementById("empty").style.display = "block";
+        document.getElementById("statCount").textContent = 0;
+        return;
+      }
+      document.getElementById("empty").style.display = "none";
+      document.getElementById("statCount").textContent = data.length;
+      for(const row of data){
+        const el = document.createElement("div");
+        el.className = "item";
+        const when = new Date(row.created_at).toLocaleString();
+        const who = row.name && row.name.trim() ? row.name.trim() : "Anonymous";
+        el.innerHTML = `
+          <div class="meta">
+            <span><strong>${who}</strong> • ${when}</span>
+            <span class="tag">${row.category}</span>
+          </div>
+          <div style="white-space:pre-wrap">${row.message}</div>
+          <div style="margin-top:8px" class="candle">
+            <span class="flame"></span>
+            <button data-id="${row.id}" class="light">Light a candle</button>
+            <span class="hint">Prayers offered: <strong id="c${row.id}">${row.candle_count||0}</strong></span>
+          </div>`;
+        list.appendChild(el);
+      }
+      document.querySelectorAll("button.light").forEach(btn=>{
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          btn.disabled = true;
+          const { error } = await db.rpc("increment_candle", { x_id: id });
+          if(!error){
+            const n = document.getElementById("c"+id);
+            if(n) n.textContent = Number(n.textContent)+1;
+          }
+          setTimeout(()=> btn.disabled = false, 2000);
+        });
+      });
+    }
+
+    document.getElementById("intentForm").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const msg = document.getElementById("formMsg");
+      msg.textContent = "";
+      const name = document.getElementById("name").value.trim();
+      const category = document.getElementById("category").value;
+      const message = document.getElementById("message").value.trim();
+      if(!message){ msg.textContent = "Please enter an intention."; return; }
+      document.getElementById("submitBtn").disabled = true;
+      const { error } = await db.from("intentions").insert({ name, category, message });
+      document.getElementById("submitBtn").disabled = false;
+      if(error){ msg.textContent = "Could not send. Try again."; console.error(error); return; }
+      document.getElementById("intentForm").reset();
+      document.getElementById("reviewNote").style.display = "block";
+    });
+
+    loadIntentions();
+  </script>
+</body>
+</html>
